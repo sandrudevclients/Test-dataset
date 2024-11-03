@@ -1,19 +1,40 @@
-import streamlit as st
-from datasets import load_dataset, Dataset, DatasetDict
 
-# Ваш токен Hugging Face
+import streamlit as st
+import os
+from datasets import load_dataset, Dataset, DatasetDict, DatasetInfo, Features, Value
+from datasets.utils import EmptyDatasetError
+
+# Получаем токен Hugging Face из переменной окружения
 HF_TOKEN = "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"
 
-# Загрузка датасета
+# Название набора данных на Hugging Face
 dataset_name = "Aleksmorshen/Testbase"
-dataset = load_dataset(dataset_name, split="train")
 
-# Функция для добавления нового имени в датасет
+# Функция для создания начального набора данных
+def create_initial_dataset():
+    # Создаем новый набор данных с начальной записью
+    initial_data = {"name": ["Пример имени"]}
+    initial_dataset = Dataset.from_dict(initial_data)
+    # Загружаем набор данных на Hugging Face
+    initial_dataset.push_to_hub(dataset_name, token=HF_TOKEN)
+
+# Пытаемся загрузить набор данных
+try:
+    dataset = load_dataset(dataset_name, split="train")
+    # Проверка на пустой набор данных
+    if len(dataset) == 0:
+        create_initial_dataset()
+        dataset = load_dataset(dataset_name, split="train")
+except EmptyDatasetError:
+    create_initial_dataset()
+    dataset = load_dataset(dataset_name, split="train")
+
+# Функция для добавления нового имени в набор данных
 def add_name(name):
     new_entry = {"name": name}
     dataset.push_to_hub(new_entry)
 
-# Функция для получения всех имен из датасета
+# Функция для получения всех имен из набора данных
 def get_names():
     return [entry["name"] for entry in dataset]
 
@@ -38,3 +59,6 @@ if names:
         st.write(name)
 else:
     st.write("Нет сохраненных имен.")
+# Ваш токен Hugging Face
+
+
